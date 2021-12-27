@@ -1,17 +1,56 @@
-
 import Head from "next/head";
+import { GetStaticProps } from "next";
+import { SubscribeButton } from "../components/SubscribeButton";
+import { stripe } from "../services/stripe";
 
-export default function Home() {
+import styles from "./home.module.scss";
+
+interface HomeProps {
+  product: {
+    priceId: String;
+    amount: number;
+  };
+}
+
+export default function Home({ product }: HomeProps) {
   return (
     <>
       <Head>
         <title>Home | ig.news</title>
       </Head>
-      <main>
-        <section>
-          
+      <main className={styles.contentContainer}>
+        <section className={styles.hero}>
+          <span>👏 Hey, Welcome</span>
+          <h1>
+            News about the <span>React</span> world.
+          </h1>
+          <p>
+            Get access to all the publicatuons <br />
+            <span>for {product.amount} mounth</span>
+          </p>
+          <SubscribeButton priceId={product.priceId} />
         </section>
+        <img src="/images/avatar.svg" alt="Girl coding" />
       </main>
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const price = await stripe.prices.retrieve("price_1KB3DxKdiBh9MGT8hCj2dyYN");
+
+  const product = {
+    priceId: price.id,
+    amount: new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD"
+    }).format(price.unit_amount / 100)
+  };
+
+  return {
+    props: {
+      product,
+    },
+    revalidate: 60 * 60 * 24 // 24 hours
+  };
+};
