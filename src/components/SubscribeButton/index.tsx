@@ -1,4 +1,5 @@
 import { signIn, useSession } from "next-auth/react";
+import { useState } from "react";
 import { api } from "../../services/api";
 import { getStripeJs } from "../../services/stripe-js";
 
@@ -10,6 +11,7 @@ interface SubscribeButtonProps {
 
 export function SubscribeButton({ priceId }: SubscribeButtonProps) {
   const { data: session } = useSession(); 
+  const [isLoading, seIsLoading] = useState(false)
 
   async function handleSubscribe() {
     if (!session) {
@@ -19,6 +21,7 @@ export function SubscribeButton({ priceId }: SubscribeButtonProps) {
 
     // Criacao de checkout session do strapi
     try {
+      seIsLoading(true)
 
       const response = await api.post("/subscribe");
 
@@ -27,8 +30,11 @@ export function SubscribeButton({ priceId }: SubscribeButtonProps) {
       const stripe = await getStripeJs();
 
       await stripe.redirectToCheckout({ sessionId });
+
     } catch (error) {
       alert(error.message);
+    }finally{
+      seIsLoading(false)
     }
   }
 
@@ -38,7 +44,7 @@ export function SubscribeButton({ priceId }: SubscribeButtonProps) {
       className={styles.subscribeButton}
       onClick={handleSubscribe}
     >
-      Subscribe now
+      {isLoading ? "Loading..." : "Subscribe now"}
     </button>
   );
 }
